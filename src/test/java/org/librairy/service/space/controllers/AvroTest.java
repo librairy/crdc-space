@@ -1,7 +1,6 @@
 package org.librairy.service.space.controllers;
 
 
-import com.google.common.primitives.Doubles;
 import org.apache.avro.AvroRemoteException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -13,7 +12,6 @@ import org.librairy.service.space.facade.model.Point;
 import org.librairy.service.space.services.CSVReader;
 import org.librairy.service.space.services.CSVWriter;
 import org.librairy.service.space.services.DirichletDistribution;
-import org.librairy.service.space.services.MyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,11 +21,8 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @RunWith(SpringRunner.class)
@@ -38,7 +33,7 @@ public class AvroTest {
     private static final Logger LOG = LoggerFactory.getLogger(AvroTest.class);
 
     @Test
-//    @Ignore
+    @Ignore
     public void writePoints() throws IOException {
         Integer numVectors  = 500000;
         Integer dimension   = 10;
@@ -66,7 +61,7 @@ public class AvroTest {
 
 
     @Test
-//    @Ignore
+    @Ignore
     public void addPoints() throws InterruptedException, IOException {
 
         AvroClient client = new AvroClient();
@@ -141,7 +136,7 @@ public class AvroTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void getSimilarPoints() throws IOException {
         AvroClient client = new AvroClient();
 
