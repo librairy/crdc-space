@@ -22,12 +22,12 @@ public class LoaderService implements ApplicationListener<ContextRefreshedEvent>
     List<Dao> daoList;
 
     @Autowired
-    MyService service;
+    List<BootService> bootServices;
 
     public void onApplicationEvent(ContextRefreshedEvent event) {
         daoList.forEach(d -> d.prepareQueries());
 
-        service.initialize();
+        bootServices.forEach( bs -> bs.prepare());
         LOG.info("All is up and running!");
     }
 }

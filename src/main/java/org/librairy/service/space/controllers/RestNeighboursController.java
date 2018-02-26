@@ -47,7 +47,7 @@ public class RestNeighboursController {
     @RequestMapping(method = RequestMethod.POST, produces = "application/json")
     public NeighbourList similar(@RequestBody SimilarRequest request)  {
         try {
-            return new NeighbourList(service.getSimilar(request.getShape(), request.getNumber(), request.getType()).stream().map(n-> new org.librairy.service.space.rest.model.Neighbour(n)).collect(Collectors.toList()));
+            return new NeighbourList(service.getSimilar(request.getShape(), request.getNumber(), request.getTypes(), request.getForce()).stream().map(n-> new org.librairy.service.space.rest.model.Neighbour(n)).collect(Collectors.toList()));
         } catch (AvroRemoteException e) {
             throw new RuntimeException(e);
         }

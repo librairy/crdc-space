@@ -1,0 +1,35 @@
+version: "2"
+services:
+ db:
+   container_name: crdc-db
+   image: cassandra:3.11.2
+   restart: always
+   privileged: true
+   expose:
+    - 7000
+    - 7001
+    - 7199
+    - 9042
+    - 9160
+   environment:
+    - "JAVA_OPTS=-XX:+AlwaysPreTouch -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+    - "MAX_HEAP_SIZE=1G"
+    - "HEAP_NEWSIZE=256M"
+   mem_limit: 2256m
+   memswap_limit: 2256m
+   cpuset: 0-1
+   command: bash -c 'if [ -z "$$(ls -A /var/lib/cassandra/)" ] ; then sleep 0; fi && /docker-entrypoint.sh cassandra -f'
+   ulimits:
+    nofile: 100000
+    memlock: -1
+    nproc: 32768
+ crdc:
+   container_name: crdc-space
+   image: librairy/crdc-space:latest
+   ports:
+    - "7777:7777"
+    - "65115:65111"
+   environment:
+    - "JAVA_OPTS=-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+    - "DB_HOST=crdc-db"
+    - "REST_PATH=/crdc-space"

@@ -2,15 +2,16 @@ package org.librairy.service.space.services;
 
 import com.google.common.base.Strings;
 import org.apache.avro.AvroRemoteException;
+import org.librairy.service.space.actions.AddPointAction;
 import org.librairy.service.space.actions.IndexAction;
-import org.librairy.service.space.data.access.CountersDao;
-import org.librairy.service.space.data.access.PointsDao;
-import org.librairy.service.space.data.access.ShapesDao;
-import org.librairy.service.space.data.access.SpacesDao;
+import org.librairy.service.space.data.access.*;
+import org.librairy.service.space.data.model.ResultList;
 import org.librairy.service.space.data.model.Space;
 import org.librairy.service.space.facade.model.Neighbour;
 import org.librairy.service.space.facade.model.Point;
+import org.librairy.service.space.facade.model.PointList;
 import org.librairy.service.space.facade.model.SpaceService;
+import org.librairy.service.space.metrics.JensenShannonSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public class MyService implements SpaceService {
+public class MyService implements SpaceService, BootService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MyService.class);
 
@@ -45,16 +46,23 @@ public class MyService implements SpaceService {
     @Autowired
     CountersDao countersDao;
 
+    @Autowired
+    ClustersDao clustersDao;
+
     private Double threshold = -1.0;
 
     private ExecutorService executors;
 
-    private boolean indexing = false;
+    private Boolean indexing = false;
 
     @PostConstruct
     public void setup() throws IOException {
         this.executors = Executors.newWorkStealingPool();
         LOG.info("Service initialized");
+    }
+
+    public ClustersDao getClustersDao() {
+        return clustersDao;
     }
 
     public SpacesDao getSpacesDao() {
@@ -77,13 +85,16 @@ public class MyService implements SpaceService {
         return executors;
     }
 
-    public void initialize(){
-        this.threshold = spacesDao.readThreshold(new Space().getId());
+    @Override
+    public boolean prepare() {
+        Double dbThreshold = spacesDao.readThreshold(new Space().getId());
+        this.threshold = dbThreshold >= 0.0? dbThreshold : 0.8;
+        return true;
     }
 
     @Override
     public boolean addPoint(Point point) throws AvroRemoteException {
-        pointsDao.save(point);
+        executors.submit(new AddPointAction(this,point,threshold));
         return true;
     }
 
@@ -94,9 +105,15 @@ public class MyService implements SpaceService {
 
     @Override
     public boolean removePoint(String pointId) throws AvroRemoteException {
-        pointsDao.remove(pointId);
-        //TODO remove from shapes
-        return true;
+        try{
+            Point point = pointsDao.read(pointId);
+            pointsDao.remove(pointId);
+            shapesDao.remove(point,threshold);
+            return true;
+        }catch (RuntimeException e){
+            LOG.warn("Point not found by id: " + pointId);
+            return false;
+        }
     }
 
     @Override
@@ -106,9 +123,10 @@ public class MyService implements SpaceService {
     }
 
     @Override
-    public List<Point> listPoints(int size, String offset) throws AvroRemoteException {
+    public PointList listPoints(int size, String offset) throws AvroRemoteException {
         Optional<String> offsetId = Strings.isNullOrEmpty(offset)? Optional.empty() : Optional.of(offset);
-        return pointsDao.list(size,offsetId).getValues();
+        ResultList<Point> resultList = pointsDao.list(size, offsetId);
+        return new PointList(resultList.getPage(), resultList.getValues());
     }
 
     @Override
@@ -129,24 +147,33 @@ public class MyService implements SpaceService {
     }
 
     @Override
-    public List<Neighbour> getNeighbours(String pointId, int max, String refType) throws AvroRemoteException {
+    public double compare(List<Double> v1, List<Double> v2) throws AvroRemoteException {
+        if (v1.isEmpty() || v2.isEmpty() || v1.size() != v2.size()) return 0.0;
+        return JensenShannonSimilarity.calculate(v1,v2);
+    }
+
+    @Override
+    public List<Neighbour> getNeighbours(String pointId, int max, List<String> types, boolean force) throws AvroRemoteException {
         if (threshold < 0 || isIndexing()){
             LOG.warn("No space created yet");
             return Collections.emptyList();
         }
         Point point = pointsDao.read(pointId);
-        List<Neighbour> res = getSimilar(point.getShape(), max + 1, refType);
+        List<Neighbour> res = getSimilar(point.getShape(), max + 1, types,force);
         if (res.size() <= 1) return Collections.emptyList();
         return res.subList(1,res.size());
     }
 
     @Override
-    public List<Neighbour> getSimilar(List<Double> shape, int max, String refType) throws AvroRemoteException {
+    public List<Neighbour> getSimilar(List<Double> shape, int max, List<String> types, boolean force) throws AvroRemoteException {
         if (threshold < 0 || isIndexing()){
             LOG.warn("No space created yet");
             return Collections.emptyList();
         }
-        return shapesDao.get(shape,threshold,max,Strings.isNullOrEmpty(refType)?Optional.empty(): Optional.of(refType));
+        if (!force)
+            return shapesDao.get(shape,threshold,max,types);
+
+        return pointsDao.compareAll(shape,max,types);
     }
 
     public synchronized void setIndexing(Boolean status){
@@ -156,4 +183,6 @@ public class MyService implements SpaceService {
     public synchronized Boolean isIndexing(){
         return this.indexing;
     }
+
+
 }

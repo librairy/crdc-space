@@ -2,7 +2,7 @@ version: "2"
 services:
  db:
    container_name: crdc-db
-   image: cassandra:3.10
+   image: cassandra:3.11.2
    restart: always
    privileged: true
    expose:
@@ -11,11 +11,11 @@ services:
     - 7199
     - 9042
     - 9160
-   ports:
-    - "9042:9042"
-    - "9160:9160"
+#   ports:
+#    - "9042:9042"
+#    - "9160:9160"
    environment:
-    - JAVA_OPTS=-XX:+AlwaysPreTouch
+    - "JAVA_OPTS=-XX:+AlwaysPreTouch -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
     - MAX_HEAP_SIZE=1G
     - HEAP_NEWSIZE=256M
    mem_limit: 2256m
@@ -33,5 +33,9 @@ services:
     - "7777:7777"
     - "65115:65111"
    environment:
-    - DB_HOST=crdc-db
-    - REST_PATH=/space
+    - "JAVA_OPTS=-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+    - "DB_HOST=crdc-db"
+    - "REST_PATH=/crdc-space"
+#   mem_limit: 2256m
+#   memswap_limit: 2256m
+#   cpuset: 1-2

@@ -52,7 +52,9 @@ public class CountersDao extends Dao{
     }
 
     public void remove(String id){
-        enqueue(session.executeAsync("delete from counters where id='"+id+"';"));
+        long size = get(id);
+        enqueue(session.executeAsync("update counters set value = value - "+size+" where id='"+id+"';"));
+
     }
 
     public void increment(String id){

@@ -2,7 +2,9 @@ package org.librairy.service.space.data.access;
 
 import com.datastax.driver.core.*;
 import org.librairy.service.space.data.model.ResultList;
+import org.librairy.service.space.facade.model.Neighbour;
 import org.librairy.service.space.facade.model.Point;
+import org.librairy.service.space.metrics.JensenShannonSimilarity;
 import org.librairy.service.space.services.SessionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +78,8 @@ public class PointsDao extends Dao{
                 point.getType(),
                 point.getShape());
         statement.setIdempotent(true);//for retries
-        enqueue(session.executeAsync(statement));
+//        enqueue(session.executeAsync(statement));
+        session.execute(statement);
         countersDao.increment("points");
     }
 
@@ -131,6 +134,44 @@ public class PointsDao extends Dao{
         }
 
         return points;
+    }
+
+    public List<Neighbour> compareAll(List<Double> shape, Integer max, List<String> types){
+        Statement statement = new SimpleStatement("select id, name, type, shape from points;");
+        statement.setFetchSize(1000);
+
+        List<Neighbour> similarPoints = new ArrayList<>();
+
+        Double minValue     = 0.0;
+
+        ResultSet rs = session.execute(statement);
+        for (Row row : rs) {
+            if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
+                rs.fetchMoreResults(); // this is asynchronous
+
+            // filter by type
+            if (!types.isEmpty() && !types.contains(row.getString(2))) continue;
+
+            // Process the row ...
+            Point point = pointFrom(row);
+
+            Double score = JensenShannonSimilarity.calculate(shape,point.getShape());
+            if (similarPoints.size() < max){
+                similarPoints.add(Neighbour.newBuilder().setId(point.getId()).setName(point.getName()).setScore(score).setType(point.getType()).build());
+            }
+            else if (score > minValue) {
+                similarPoints.remove(max-1);
+                similarPoints.add(Neighbour.newBuilder().setId(point.getId()).setName(point.getName()).setScore(score).setType(point.getType()).build());
+                similarPoints.sort((a,b) -> -a.getScore().compareTo(b.getScore()));
+                minValue = similarPoints.get(max-1).getScore();
+            }
+
+
+        }
+
+        return similarPoints;
+
+
     }
 
     public Point pointFrom(Row row){

@@ -1,6 +1,7 @@
 package org.librairy.service.space.data.access;
 
 import com.datastax.driver.core.*;
+import com.google.common.base.Strings;
 import org.librairy.service.space.data.model.ResultList;
 import org.librairy.service.space.data.model.ShapebyCluster;
 import org.librairy.service.space.facade.model.Neighbour;
@@ -34,6 +35,9 @@ public class ShapesDao extends Dao {
 
     @Autowired
     CountersDao countersDao;
+
+    @Autowired
+    ClustersDao clustersDao;
 
     private Session session;
 
@@ -71,9 +75,10 @@ public class ShapesDao extends Dao {
                 shapebyCluster.getId(),
                 shapebyCluster.getShape());
         statement.setIdempotent(true);
-        enqueue(session.executeAsync(statement));
-
+//        enqueue(session.executeAsync(statement));
+        session.execute(statement);
         countersDao.increment("shapes");
+        clustersDao.increment(shapebyCluster.getCluster());
 
         return shapebyCluster;
     }
@@ -113,7 +118,7 @@ public class ShapesDao extends Dao {
     }
 
 
-    public List<Neighbour> get(List<Double> shape, Double threshold, Integer max, Optional<String> type){
+    public List<Neighbour> get(List<Double> shape, Double threshold, Integer max, List<String> types){
 
 
         String cluster = ShapebyCluster.getSortedTopics(shape, threshold);
@@ -126,8 +131,10 @@ public class ShapesDao extends Dao {
         for(Row row: rs){
             if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
                 rs.fetchMoreResults();
-
-            if (!type.isPresent()|| (row.getString(2).equalsIgnoreCase(type.get()))) neigbours.add(new Neighbour(row.getString(0),row.getString(1), row.getString(2), JensenShannonSimilarity.calculate(shape,row.getList(3,Double.class))));
+            String id   = row.getString(0);
+            String name = row.getString(1);
+            String type = row.getString(2);
+            if (types.isEmpty()|| (types.contains(row.getString(2)))) neigbours.add(new Neighbour(id, Strings.isNullOrEmpty(name)?"":name, Strings.isNullOrEmpty(type)?"":type, JensenShannonSimilarity.calculate(shape,row.getList(3,Double.class))));
 
         }
 

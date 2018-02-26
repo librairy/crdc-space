@@ -16,7 +16,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -31,7 +34,7 @@ public class MyServiceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MyServiceTest.class);
 
-    Integer dimension   = 10;
+    Integer dimension   = 100;
     Integer numVectors  = 100000;//1000000;
     Double threshold    = 0.7;
 
@@ -41,32 +44,37 @@ public class MyServiceTest {
 
     @Test
     @Ignore
-    public void addPointsAndIndex() throws InterruptedException, AvroRemoteException {
+    public void addPoints() throws InterruptedException, AvroRemoteException {
 
         service.removeAll();
 
-        // Prepare points
-        LOG.info("adding points..");
+        LOG.info("creating points..");
         List<Point> points = IntStream.range(0, numVectors).mapToObj(i -> new DirichletDistribution("doc" + i, dimension)).map(d -> Point.newBuilder().setId(d.getId()).setName("document-" + d.getId()).setShape(d.getVector()).build()).collect(Collectors.toList());
 
 
-        // Add points
-        points.forEach(p -> {
+        // Prepare points
+        LOG.info("adding points..");
+        Instant startModel          = Instant.now();
+        points.stream().forEach(point -> {
             try {
-                service.addPoint(p);
+                service.addPoint(point);
             } catch (AvroRemoteException e) {
                 e.printStackTrace();
             }
         });
 
-        // Create a space
-        try {
-            service.index(threshold);
-            LOG.info("Space request sent!");
-        } catch (AvroRemoteException e) {
-            e.printStackTrace();
+        LOG.info("Waiting for finish..");
+        while(!service.isIndexed()){
+            Thread.sleep(500);
         }
-        LOG.info("Operation completed!");
+
+        Instant endModel    = Instant.now();
+        LOG.info("All points ("+this.numVectors+") added and indexed in: "
+                + ChronoUnit.HOURS.between(startModel,endModel) + "hours "
+
+                + ChronoUnit.MINUTES.between(startModel,endModel)%60 + "min "
+                + (ChronoUnit.SECONDS.between(startModel,endModel)%3600) + "secs");
+
     }
 
     @Test
@@ -91,10 +99,10 @@ public class MyServiceTest {
     public void getNeighbours(){
 
         // Request Neighbours
-        IntStream.range(0, numVectors).parallel().forEach(p -> {
+        IntStream.range(0, numVectors).forEach(p -> {
             try {
                 LOG.info("Neighbour of " + p);
-                service.getNeighbours("doc"+p, 10, null).forEach( n -> LOG.info("\t " + n));
+                service.getNeighbours("doc"+p, 10, Collections.emptyList(), false).forEach(n -> LOG.info("\t " + n));
             } catch (AvroRemoteException e) {
                 e.printStackTrace();
             }
@@ -107,7 +115,7 @@ public class MyServiceTest {
         IntStream.range(0, numVectors).parallel().mapToObj(i -> new DirichletDistribution("shape" + i, dimension)).forEach( d -> {
             try {
                 LOG.info("Similar points of " + Arrays.toString(Doubles.toArray(d.getVector())));
-                service.getSimilar(d.getVector(), 10, null).forEach( n -> LOG.info("\t " + n));
+                service.getSimilar(d.getVector(), 10, Collections.emptyList(), false).forEach( n -> LOG.info("\t " + n));
             } catch (AvroRemoteException e) {
                 e.printStackTrace();
             }
@@ -116,7 +124,7 @@ public class MyServiceTest {
 
 
     @Test
-//    @Ignore
+    @Ignore
     public void hybridSimilarPoints(){
 
         Point point = service.getPointsDao().read("doc1");
@@ -129,11 +137,11 @@ public class MyServiceTest {
 //        service.getPointsDao().listAll().stream().limit(1).forEach(point -> {
 
             try {
-                List<Neighbour> neighbours = service.getNeighbours(point.getId(), 10, null);
+                List<Neighbour> neighbours = service.getNeighbours(point.getId(), 10, Collections.emptyList(), false);
                 LOG.info("Neighbours: ");
                 neighbours.forEach(n -> LOG.info("\t " + n));
 
-                List<Neighbour> similarPoints = service.getSimilar(point.getShape(), 10, null);
+                List<Neighbour> similarPoints = service.getSimilar(point.getShape(), 10, Collections.emptyList(), false);
                 LOG.info("Similar: ");
                 similarPoints.forEach(n -> LOG.info("\t " + n));
 

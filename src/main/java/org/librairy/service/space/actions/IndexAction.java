@@ -45,7 +45,7 @@ public class IndexAction implements Runnable {
 
         service.getShapesDao().removeAll();
         service.getCountersDao().remove("shapes");
-        service.getCountersDao().remove("neighbours");
+        service.getClustersDao().removeAll();
 
         LOG.info("Indexing points..");
 
@@ -75,7 +75,7 @@ public class IndexAction implements Runnable {
 
         service.getSpacesDao().save(space);
 
-        LOG.info("waiting to persist indexes..");
+        LOG.info("waiting for persist indexes..");
         try {
             while(!service.isIndexed()){
                 Thread.sleep(2000);

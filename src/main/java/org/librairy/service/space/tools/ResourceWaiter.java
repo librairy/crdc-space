@@ -32,8 +32,9 @@ public class ResourceWaiter {
             } catch (Exception e){
                 LOG.debug("Connection error to host: " + host + ":" + port, e);
             }
-            int delay = random.nextInt(100) * 450;
-            LOG.info("Waiting " + delay + "msecs for '" + host+":"+port +"' ...");
+            //int delay = random.nextInt(100) * 250;
+            int delay = 2000;
+            LOG.info("Waiting for '" + host+":"+port +"' ...");
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {

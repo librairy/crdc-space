@@ -7,7 +7,7 @@ public class Space {
 
     private String name;
 
-    private String id = "crdc";
+    private String id = "default";
 
     private Double threshold;
 
