@@ -41,8 +41,9 @@ public class CSVReader {
         reader.close();
     }
 
-    public DirichletDistribution read() throws IOException {
+    public DirichletDistribution readLine() throws IOException, EndOfFileException {
         String string = reader.readLine();
+        if (string == null) throw new EndOfFileException();
         if (Strings.isNullOrEmpty(string)) return new DirichletDistribution("",Collections.emptyList());
         return jsonMapper.readValue(string,DirichletDistribution.class);
 

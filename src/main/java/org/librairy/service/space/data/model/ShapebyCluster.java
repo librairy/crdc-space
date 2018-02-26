@@ -2,6 +2,7 @@ package org.librairy.service.space.data.model;
 
 import groovy.lang.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -69,6 +70,20 @@ public class ShapebyCluster {
         this.shape = shape;
     }
 
+//    public static String getSortedTopics(List<Double> vector, Double threshold){
+//        List<Tuple2<Integer, Double>> topics = IntStream
+//                .range(0, vector.size())
+//                .mapToObj(i -> new Tuple2<Integer, Double>(i, vector.get(i)))
+//                .sorted((a, b) -> -a.getSecond().compareTo(b.getSecond()))
+//                .collect(Collectors.toList());
+//
+//
+//        String cluster = topics.subList(0,5).stream().map(t -> t.getFirst()).sorted((a,b)-> a.compareTo(b)).map(i -> String.valueOf(i)).collect(Collectors.joining("|"));
+//
+//        return cluster;
+//
+//    }
+
     public static String getSortedTopics(List<Double> vector, Double threshold){
         List<Tuple2<Integer, Double>> topics = IntStream
                 .range(0, vector.size())
@@ -90,6 +105,28 @@ public class ShapebyCluster {
         return cluster.toString();
 
     }
+
+//    public static String getSortedTopics(List<Double> vector, Double threshold){
+//        List<Tuple2<Integer, Double>> topics = IntStream
+//                .range(0, vector.size())
+//                .mapToObj(i -> new Tuple2<Integer, Double>(i, vector.get(i)))
+//                .sorted((a, b) -> -a.getSecond().compareTo(b.getSecond()))
+//                .collect(Collectors.toList());
+//
+//        Double accumulated = 0.0;
+//
+//        List<Integer> cluster = new ArrayList<>();
+//        for(Tuple2<Integer, Double> topic : topics){
+//
+//            accumulated += topic.getSecond();
+//            cluster.add(topic.getFirst());
+//
+//            if (accumulated >= threshold) break;
+//
+//        }
+//        return cluster.stream().sorted((a,b)->a.compareTo(b)).map(i -> String.valueOf(i)).collect(Collectors.joining("|"));
+//
+//    }
 
     @Override
     public boolean equals(Object o) {

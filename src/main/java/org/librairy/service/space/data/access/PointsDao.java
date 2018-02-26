@@ -2,6 +2,7 @@ package org.librairy.service.space.data.access;
 
 import com.datastax.driver.core.*;
 import org.librairy.service.space.data.model.ResultList;
+import org.librairy.service.space.data.model.ShapebyCluster;
 import org.librairy.service.space.facade.model.Neighbour;
 import org.librairy.service.space.facade.model.Point;
 import org.librairy.service.space.metrics.JensenShannonSimilarity;
@@ -38,6 +39,9 @@ public class PointsDao extends Dao{
 
     @Autowired
     CountersDao countersDao;
+
+    @Autowired
+    ClustersDao clustersDao;
 
     private PreparedStatement insertQuery;
     private PreparedStatement readQuery;
@@ -99,6 +103,7 @@ public class PointsDao extends Dao{
         session.execute("truncate points;");
         shapesDao.removeAll();
         countersDao.removeAll();
+        clustersDao.removeAll();
     }
 
     public ResultList<Point> list(Integer max, Optional<String> page){

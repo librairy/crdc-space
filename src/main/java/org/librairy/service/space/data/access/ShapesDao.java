@@ -97,6 +97,7 @@ public class ShapesDao extends Dao {
         String id       = point.getId();
 
         enqueue(session.executeAsync(deleteQuery.bind(cluster, type, id)));
+        clustersDao.decrement(ShapebyCluster.getSortedTopics(point.getShape(),threshold));
     }
 
     public ResultList<Point> list(String cluster, Integer max, Optional<String> page){

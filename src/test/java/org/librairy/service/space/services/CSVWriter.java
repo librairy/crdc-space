@@ -46,8 +46,7 @@ public class CSVWriter {
         String separator = ";;";
         try {
 
-            writer.write(jsonMapper.writeValueAsString(point));
-            writer.write("\n");
+            writer.write(jsonMapper.writeValueAsString(point)+"\n");
 
 
         } catch (IOException e) {

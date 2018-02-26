@@ -12,6 +12,7 @@ import org.librairy.service.space.facade.model.Point;
 import org.librairy.service.space.services.CSVReader;
 import org.librairy.service.space.services.CSVWriter;
 import org.librairy.service.space.services.DirichletDistribution;
+import org.librairy.service.space.services.EndOfFileException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -85,11 +86,12 @@ public class AvroTest {
         AtomicInteger counter =new AtomicInteger();
         while(true){
             try{
-                DirichletDistribution point = reader.read();
+                DirichletDistribution point = reader.readLine();
                 if (point.getVector().isEmpty()) continue;
                 if (counter.incrementAndGet() > max) break;
                 client.addPoint(Point.newBuilder().setId(point.getId()).setShape(point.getVector()).build());
-
+            }catch (EndOfFileException e){
+                break;
             }catch (Exception e){
                 e.printStackTrace();
                 break;
@@ -154,7 +156,7 @@ public class AvroTest {
         AtomicInteger counter =new AtomicInteger();
         while(true){
             try{
-                DirichletDistribution point = reader.read();
+                DirichletDistribution point = reader.readLine();
                 if (point.getVector().isEmpty()) continue;
                 if (counter.incrementAndGet() > max) break;
 
@@ -162,7 +164,8 @@ public class AvroTest {
 
                 LOG.info("Similar points in cluster: " + cluster);
                 client.getNeighbours(point.getId(),10, Collections.emptyList(),true).forEach(sim -> LOG.info("\t " + sim));
-
+            }catch (EndOfFileException e){
+                break;
             }catch (Exception e){
                 e.printStackTrace();
                 break;
@@ -172,7 +175,7 @@ public class AvroTest {
     }
 
     @Test
-//    @Ignore
+    @Ignore
     public void reindex() throws IOException, InterruptedException {
         AvroClient client = new AvroClient();
 

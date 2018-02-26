@@ -99,7 +99,7 @@ public class MyServiceTest {
     public void getNeighbours(){
 
         // Request Neighbours
-        IntStream.range(0, numVectors).forEach(p -> {
+        IntStream.range(0, 10).forEach(p -> {
             try {
                 LOG.info("Neighbour of " + p);
                 service.getNeighbours("doc"+p, 10, Collections.emptyList(), false).forEach(n -> LOG.info("\t " + n));
@@ -112,7 +112,7 @@ public class MyServiceTest {
     @Test
     @Ignore
     public void getSimilarPoints(){
-        IntStream.range(0, numVectors).parallel().mapToObj(i -> new DirichletDistribution("shape" + i, dimension)).forEach( d -> {
+        IntStream.range(0, 10).parallel().mapToObj(i -> new DirichletDistribution("shape" + i, dimension)).forEach( d -> {
             try {
                 LOG.info("Similar points of " + Arrays.toString(Doubles.toArray(d.getVector())));
                 service.getSimilar(d.getVector(), 10, Collections.emptyList(), false).forEach( n -> LOG.info("\t " + n));
