@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Component
 public class MyService implements SpaceService, BootService {
@@ -161,7 +162,7 @@ public class MyService implements SpaceService, BootService {
         Point point = pointsDao.read(pointId);
         List<Neighbour> res = getSimilar(point.getShape(), max + 1, types,force);
         if (res.size() <= 1) return Collections.emptyList();
-        return res.subList(1,res.size());
+        return res.stream().filter(n -> !n.getId().equalsIgnoreCase(point.getId())).collect(Collectors.toList());
     }
 
     @Override

@@ -22,13 +22,12 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {Application.class})
-@WebAppConfiguration
 public class AvroTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(AvroTest.class);
@@ -60,6 +59,27 @@ public class AvroTest {
 
     }
 
+
+    @Test
+    @Ignore
+    public void addPoint() throws InterruptedException, IOException {
+
+        AvroClient client = new AvroClient();
+
+
+        //String host     = "librairy.linkeddata.es";
+        String host     = "localhost";
+        Integer port    = 65411;
+
+        client.open(host,port);
+
+        List<Double> vector = Arrays.asList(new Double[]{0.1,0.2});
+
+        client.addPoint(Point.newBuilder().setId("sample").setShape(vector).build());
+
+        client.close();
+        LOG.info("completed!");
+    }
 
     @Test
     @Ignore
