@@ -13,6 +13,8 @@ import org.librairy.service.space.services.MyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
@@ -39,16 +41,24 @@ public class RestPointsController {
 
     }
 
-    @ApiOperation(value = "add to space", nickname = "postAdd", response=Boolean.class)
+    @ApiOperation(value = "add to space", nickname = "postAdd", response=Void.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = Boolean.class),
+            @ApiResponse(code = 200, message = "Success", response = Void.class),
     })
     @RequestMapping(value = "/points", method = RequestMethod.POST, produces = "application/json")
-    public Boolean add(@RequestBody Point point)  {
+    public ResponseEntity<Void> add(@RequestBody Point point)  {
         try {
-            return service.addPoint(point);
+            if (!service.addPoint(point)) {
+                LOG.warn("Invalid vector size");
+                return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<Void>(HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -57,37 +67,52 @@ public class RestPointsController {
             @ApiResponse(code = 200, message = "Success", response = Point.class),
     })
     @RequestMapping(value = "/points/{id:.+}", method = RequestMethod.GET, produces = "application/json")
-    public Point get(@PathVariable("id") String id)  {
+    public ResponseEntity<Point> get(@PathVariable("id") String id)  {
         try {
-            return new Point(service.getPoint(id));
+            return new ResponseEntity(new Point(service.getPoint(id)), HttpStatus.ACCEPTED);
+        } catch(RuntimeException e){
+            // point not found
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @ApiOperation(value = "remove", response=Boolean.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = Boolean.class),
+            @ApiResponse(code = 200, message = "Success", response = Void.class),
     })
     @RequestMapping(value = "/points/{id:.+}", method = RequestMethod.DELETE, produces = "application/json")
-    public Boolean remove(@PathVariable String id)  {
+    public ResponseEntity<Void> remove(@PathVariable String id)  {
         try {
-            return service.removePoint(id);
+            return new ResponseEntity(service.removePoint(id), HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @ApiOperation(value = "remove all", response=Boolean.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = Boolean.class),
+            @ApiResponse(code = 200, message = "Success", response = Void.class),
     })
     @RequestMapping(value = "/points", method = RequestMethod.DELETE, produces = "application/json")
-    public Boolean removeAll()  {
+    public ResponseEntity<Void> removeAll()  {
         try {
-            return service.removeAll();
+            return new ResponseEntity(service.removeAll(),HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -96,12 +121,16 @@ public class RestPointsController {
             @ApiResponse(code = 200, message = "Success", response = PointList.class),
     })
     @RequestMapping(value = "/points", method = RequestMethod.GET, produces = "application/json")
-    public PointList list(@RequestParam(defaultValue = "10",required = true) Integer size, @RequestParam(defaultValue = "",required = false) String offset)  {
+    public ResponseEntity<PointList> list(@RequestParam(defaultValue = "10",required = true) Integer size, @RequestParam(defaultValue = "",required = false) String offset)  {
         try {
             org.librairy.service.space.facade.model.PointList result = service.listPoints(size, offset);
-            return new PointList(result.getNextPage(), result.getPoints().stream().map(p -> new org.librairy.service.space.rest.model.Point(p)).collect(Collectors.toList()));
+            return new ResponseEntity(new PointList(result.getNextPage(), result.getPoints().stream().map(p -> new org.librairy.service.space.rest.model.Point(p)).collect(Collectors.toList())),HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -110,11 +139,15 @@ public class RestPointsController {
             @ApiResponse(code = 200, message = "Success", response = NeighbourList.class),
     })
     @RequestMapping(value = "/points/{id:.+}/neighbours", method = RequestMethod.POST, produces = "application/json")
-    public NeighbourList neighbours(@PathVariable("id") String id, @RequestBody NeighboursRequest request)  {
+    public ResponseEntity<NeighbourList> neighbours(@PathVariable("id") String id, @RequestBody NeighboursRequest request)  {
         try {
-            return new NeighbourList(service.getNeighbours(id,request.getNumber(),request.getTypes(), request.getForce()).stream().map(p -> new org.librairy.service.space.rest.model.Neighbour(p)).collect(Collectors.toList()));
+            return new ResponseEntity(new NeighbourList(service.getNeighbours(id,request.getNumber(),request.getTypes(), request.getForce()).stream().map(p -> new org.librairy.service.space.rest.model.Neighbour(p)).collect(Collectors.toList())),HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

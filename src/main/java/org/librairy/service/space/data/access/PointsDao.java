@@ -3,6 +3,7 @@ package org.librairy.service.space.data.access;
 import com.datastax.driver.core.*;
 import org.librairy.service.space.data.model.ResultList;
 import org.librairy.service.space.data.model.ShapebyCluster;
+import org.librairy.service.space.data.model.Space;
 import org.librairy.service.space.facade.model.Neighbour;
 import org.librairy.service.space.facade.model.Point;
 import org.librairy.service.space.metrics.JensenShannonSimilarity;
@@ -41,7 +42,13 @@ public class PointsDao extends Dao{
     CountersDao countersDao;
 
     @Autowired
+    TypesDao typesDao;
+
+    @Autowired
     ClustersDao clustersDao;
+
+    @Autowired
+    SpacesDao spacesDao;
 
     private PreparedStatement insertQuery;
     private PreparedStatement readQuery;
@@ -85,6 +92,7 @@ public class PointsDao extends Dao{
 //        enqueue(session.executeAsync(statement));
         session.execute(statement);
         countersDao.increment("points");
+        typesDao.increment(point.getType());
     }
 
     public Point read(String id){
@@ -95,8 +103,14 @@ public class PointsDao extends Dao{
     }
 
     public void remove(String id){
-        enqueue(session.executeAsync(deleteQuery.bind(id)));
-        countersDao.decrement("points");
+        try{
+            Point point = read(id);
+            enqueue(session.executeAsync(deleteQuery.bind(id)));
+            countersDao.decrement("points");
+            typesDao.decrement(point.getType());
+        }catch (RuntimeException e){
+            LOG.warn("No point found by id:'"+id+"'");
+        }
     }
 
     public void removeAll(){
@@ -104,6 +118,8 @@ public class PointsDao extends Dao{
         shapesDao.removeAll();
         countersDao.removeAll();
         clustersDao.removeAll();
+        typesDao.removeAll();
+        spacesDao.removeAll();
     }
 
     public ResultList<Point> list(Integer max, Optional<String> page){
@@ -118,28 +134,13 @@ public class PointsDao extends Dao{
         PagingState pagingState = result.getExecutionInfo().getPagingState();
         List<Row> rows = result.all();
 
-        if (rows == null || rows.isEmpty()) return new ResultList<>(Collections.emptyList(), pagingState!= null? pagingState.toString() : "");
+        if (rows == null || rows.isEmpty()) return new ResultList<>(0l,Collections.emptyList(), pagingState!= null? pagingState.toString() : "");
 
         List<Point> values = rows.stream().limit(max).map(row -> pointFrom(row)).collect(Collectors.toList());
-        return new ResultList<>(values, pagingState!= null? pagingState.toString() : "");
+        long total = countersDao.get("points");
+        return new ResultList<>(total,values, pagingState!= null? pagingState.toString() : "");
     }
 
-    public List<Point> listAll(){
-        Statement statement = new SimpleStatement("select id, name, type, shape from points;");
-        statement.setFetchSize(1000);
-        List<Point> points = new ArrayList<>();
-
-        ResultSet rs = session.execute(statement);
-        for (Row row : rs) {
-            if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
-                rs.fetchMoreResults(); // this is asynchronous
-
-            // Process the row ...
-            points.add(pointFrom(row));
-        }
-
-        return points;
-    }
 
     public List<Neighbour> compareAll(List<Double> shape, Integer max, List<String> types){
         Statement statement = new SimpleStatement("select id, name, type, shape from points;");
@@ -174,7 +175,7 @@ public class PointsDao extends Dao{
 
         }
 
-        return similarPoints;
+        return similarPoints.stream().sorted((a,b) -> -a.getScore().compareTo(b.getScore())).collect(Collectors.toList());
 
 
     }

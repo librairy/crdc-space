@@ -72,6 +72,7 @@ public class IndexAction implements Runnable {
         Space space = new Space();
         space.setDate(dateFormatter.format(new Date()));
         space.setThreshold(threshold);
+        space.setDimensions(service.getSpacesDao().readDimensions(new Space().getId()));
 
         service.getSpacesDao().save(space);
 

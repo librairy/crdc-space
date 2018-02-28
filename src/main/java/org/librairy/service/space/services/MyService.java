@@ -7,10 +7,7 @@ import org.librairy.service.space.actions.IndexAction;
 import org.librairy.service.space.data.access.*;
 import org.librairy.service.space.data.model.ResultList;
 import org.librairy.service.space.data.model.Space;
-import org.librairy.service.space.facade.model.Neighbour;
-import org.librairy.service.space.facade.model.Point;
-import org.librairy.service.space.facade.model.PointList;
-import org.librairy.service.space.facade.model.SpaceService;
+import org.librairy.service.space.facade.model.*;
 import org.librairy.service.space.metrics.JensenShannonSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +47,12 @@ public class MyService implements SpaceService, BootService {
     @Autowired
     ClustersDao clustersDao;
 
+    @Autowired
+    SummaryDao summaryDao;
+
     private Double threshold = -1.0;
+
+    private Integer dimensions = -1;
 
     private ExecutorService executors;
 
@@ -90,11 +92,20 @@ public class MyService implements SpaceService, BootService {
     public boolean prepare() {
         Double dbThreshold = spacesDao.readThreshold(new Space().getId());
         this.threshold = dbThreshold >= 0.0? dbThreshold : 0.8;
+
+        Integer dbDimensions = spacesDao.readDimensions(new Space().getId());
+        this.dimensions = dbDimensions > 0? dbDimensions : -1;
         return true;
     }
 
     @Override
     public boolean addPoint(Point point) throws AvroRemoteException {
+        if (dimensions < 0){
+            dimensions = point.getShape().size();
+            spacesDao.updateDimension(new Space().getId(), dimensions);
+        }else if (dimensions != point.getShape().size()){
+            return false;
+        }
         executors.submit(new AddPointAction(this,point,threshold));
         return true;
     }
@@ -120,6 +131,7 @@ public class MyService implements SpaceService, BootService {
     @Override
     public boolean removeAll() throws AvroRemoteException {
         pointsDao.removeAll();
+        dimensions = -1;
         return true;
     }
 
@@ -127,7 +139,7 @@ public class MyService implements SpaceService, BootService {
     public PointList listPoints(int size, String offset) throws AvroRemoteException {
         Optional<String> offsetId = Strings.isNullOrEmpty(offset)? Optional.empty() : Optional.of(offset);
         ResultList<Point> resultList = pointsDao.list(size, offsetId);
-        return new PointList(resultList.getPage(), resultList.getValues());
+        return new PointList(resultList.getTotal(),resultList.getPage(), resultList.getValues());
     }
 
     @Override
@@ -175,6 +187,11 @@ public class MyService implements SpaceService, BootService {
             return shapesDao.get(shape,threshold,max,types);
 
         return pointsDao.compareAll(shape,max,types);
+    }
+
+    @Override
+    public Summary getSummary() throws AvroRemoteException {
+        return summaryDao.getSummary();
     }
 
     public synchronized void setIndexing(Boolean status){

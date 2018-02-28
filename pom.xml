@@ -34,6 +34,7 @@
 
 	  <!-- Project Dependencies -->
 	  <commons-lang3.version>3.5</commons-lang3.version>
+	  <commons-math.version>3.6.1</commons-math.version>
 	  <joda.version>2.9.9</joda.version>
 	  <junit.version>4.12</junit.version>
 	  <logback.version>1.1.3</logback.version>
@@ -84,6 +85,13 @@
 				  <groupId>org.apache.commons</groupId>
 				  <artifactId>commons-lang3</artifactId>
 				  <version>${commons-lang3.version}</version>
+			  </dependency>
+
+			  <!-- Math library -->
+			  <dependency>
+				  <groupId>org.apache.commons</groupId>
+				  <artifactId>commons-math3</artifactId>
+				  <version>${commons-math.version}</version>
 			  </dependency>
 
 			  <!-- Unit tests Libraries -->
@@ -192,6 +200,12 @@
 			  <scope>test</scope>
 		  </dependency>
 
+		  <!-- Math -->
+		  <dependency>
+			  <groupId>org.apache.commons</groupId>
+			  <artifactId>commons-math3</artifactId>
+		  </dependency>
+
 		  <!-- Logging -->
 		  <dependency>
 			  <groupId>ch.qos.logback</groupId>
@@ -233,9 +247,9 @@
 				  <artifactId>maven-surefire-plugin</artifactId>
 				  <version>2.11</version>
 				  <configuration>
-					  <includes>
-						  <exclude>%regex[.*IntTest.*]</exclude>
-					  </includes>
+					  <excludes>
+						  <exclude>**/*IntTest.java</exclude>
+					  </excludes>
 				  </configuration>
 			  </plugin>
 

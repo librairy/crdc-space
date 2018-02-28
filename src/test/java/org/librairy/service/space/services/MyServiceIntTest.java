@@ -30,9 +30,9 @@ import java.util.stream.IntStream;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
-public class MyServiceTest {
+public class MyServiceIntTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MyServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MyServiceIntTest.class);
 
     Integer dimension   = 100;
     Integer numVectors  = 100000;//1000000;
@@ -43,7 +43,6 @@ public class MyServiceTest {
 
 
     @Test
-    @Ignore
     public void addPoints() throws InterruptedException, AvroRemoteException {
 
         service.removeAll();
@@ -78,7 +77,6 @@ public class MyServiceTest {
     }
 
     @Test
-    @Ignore
     public void index() throws InterruptedException, AvroRemoteException {
 
         try {
@@ -95,7 +93,6 @@ public class MyServiceTest {
     }
 
     @Test
-    @Ignore
     public void getNeighbours(){
 
         // Request Neighbours
@@ -110,7 +107,6 @@ public class MyServiceTest {
     }
 
     @Test
-    @Ignore
     public void getSimilarPoints(){
         IntStream.range(0, 10).parallel().mapToObj(i -> new DirichletDistribution("shape" + i, dimension)).forEach( d -> {
             try {
@@ -124,7 +120,6 @@ public class MyServiceTest {
 
 
     @Test
-    @Ignore
     public void hybridSimilarPoints(){
 
         Point point = service.getPointsDao().read("doc1");

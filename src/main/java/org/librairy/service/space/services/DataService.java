@@ -1,5 +1,6 @@
 package org.librairy.service.space.services;
 
+import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
 import org.librairy.service.space.data.access.Dao;
 import org.librairy.service.space.tools.ResourceWaiter;
@@ -81,7 +82,8 @@ public class DataService extends AbstractCassandraConfiguration {
         //"CREATE KEYSPACE space WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1  };"
 
         for(Dao dao: daoList){
-            schemaScripts.add(dao.createTable());
+            String statement = dao.createTable();
+            if (!Strings.isNullOrEmpty(statement)) schemaScripts.add(statement);
         }
 
         return schemaScripts;

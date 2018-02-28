@@ -1,7 +1,6 @@
 package org.librairy.service.space.metrics;
 
 import org.apache.avro.AvroRemoteException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.librairy.service.space.Application;
@@ -30,9 +29,9 @@ import java.util.stream.IntStream;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
-public class Evaluation {
+public class EvaluationIntTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Evaluation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EvaluationIntTest.class);
 
     Integer total = 10000;
 
@@ -40,7 +39,6 @@ public class Evaluation {
     MyService service;
 
     @Test
-    @Ignore
     public void writePoints() throws IOException {
         Integer dimension   = 10;
 
@@ -67,7 +65,6 @@ public class Evaluation {
 
 
     @Test
-    @Ignore
     public void addPoints() throws InterruptedException, IOException {
 
 
@@ -127,7 +124,6 @@ public class Evaluation {
     }
 
     @Test
-    @Ignore
     public void fmeasure() {
 
         Integer sampleSize = 100;
@@ -167,7 +163,6 @@ public class Evaluation {
     }
 
     @Test
-    @Ignore
     public void clusterLabel(){
 
         for(int i=0; i<10;i++){

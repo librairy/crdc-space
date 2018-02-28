@@ -9,6 +9,8 @@ import org.librairy.service.space.facade.model.SpaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,11 +44,15 @@ public class RestSpacesController {
             @ApiResponse(code = 200, message = "Success", response = Boolean.class),
     })
     @RequestMapping(method = RequestMethod.POST, produces = "application/json")
-    public Boolean index(@RequestParam Double threshold)  {
+    public ResponseEntity<Boolean> index(@RequestParam Double threshold)  {
         try {
-            return service.index(threshold);
+            return new ResponseEntity(service.index(threshold), HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -56,11 +62,15 @@ public class RestSpacesController {
             @ApiResponse(code = 200, message = "Success", response = Boolean.class),
     })
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
-    public Boolean index()  {
+    public ResponseEntity<Boolean> index()  {
         try {
-            return service.isIndexed();
+            return new ResponseEntity(service.isIndexed(),HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

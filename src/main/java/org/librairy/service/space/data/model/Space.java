@@ -11,6 +11,8 @@ public class Space {
 
     private Double threshold;
 
+    private Integer dimensions;
+
     private String date;
 
     public Space() {
@@ -44,4 +46,11 @@ public class Space {
         this.date = date;
     }
 
+    public Integer getDimensions() {
+        return dimensions;
+    }
+
+    public void setDimensions(Integer dimensions) {
+        this.dimensions = dimensions;
+    }
 }

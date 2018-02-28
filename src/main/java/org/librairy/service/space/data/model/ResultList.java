@@ -11,9 +11,12 @@ public class ResultList<T> {
 
     private String page;
 
-    public ResultList(List<T> values, String page) {
+    private long total;
+
+    public ResultList(long total, List<T> values, String page) {
         this.values = values;
         this.page = page;
+        this.total = total;
     }
 
     public List<T> getValues() {
@@ -30,5 +33,13 @@ public class ResultList<T> {
 
     public void setPage(String page) {
         this.page = page;
+    }
+
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
     }
 }

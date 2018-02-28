@@ -35,9 +35,10 @@ public class SpacesDao extends Dao implements BootService{
     private PreparedStatement readQuery;
     private PreparedStatement readThresholdQuery;
     private PreparedStatement deleteQuery;
+    private PreparedStatement readDimensionsQuery;
+    private PreparedStatement updateQuery;
 
     private SimpleDateFormat dateFormatter      = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-
 
 
     @PostConstruct
@@ -51,6 +52,7 @@ public class SpacesDao extends Dao implements BootService{
                 "id text, " +
                 "name text, " +
                 "threshold double, " +
+                "dimensions int, " +
                 "date text, " +
                 "PRIMARY KEY (id));";
     }
@@ -61,16 +63,18 @@ public class SpacesDao extends Dao implements BootService{
         defaultSpace.setName("initial-space");
         defaultSpace.setThreshold(0.8);
         defaultSpace.setDate(dateFormatter.format(new Date()));
+        defaultSpace.setDimensions(-1);
 
         save(defaultSpace);
         return true;
     }
 
-
     public void prepareQueries(){
-        insertQuery         = session.prepare("insert into spaces (id, name, threshold, date) values (?, ?, ?, ?)");
+        insertQuery         = session.prepare("insert into spaces (id, name, threshold, dimensions, date) values (?, ?, ?, ?, ?)");
+        updateQuery         = session.prepare("update spaces set dimensions = ? where id = ?");
         readThresholdQuery  = session.prepare("select threshold from spaces where id=?");
-        readQuery           = session.prepare("select id, name, threshold, date from spaces where id=?");
+        readDimensionsQuery  = session.prepare("select dimensions from spaces where id=?");
+        readQuery           = session.prepare("select id, name, threshold, dimensions, date from spaces where id=?");
         deleteQuery         = session.prepare("delete from spaces where id=?");
     }
 
@@ -79,10 +83,18 @@ public class SpacesDao extends Dao implements BootService{
                     space.getId(),
                     space.getName(),
                     space.getThreshold(),
+                    space.getDimensions(),
                     space.getDate()
                 )));
 
 
+    }
+
+    public void updateDimension(String id, Integer dimensions){
+        enqueue(session.executeAsync(updateQuery.bind(
+                dimensions,
+                id
+        )));
     }
 
     public Double readThreshold(String id){
@@ -90,6 +102,13 @@ public class SpacesDao extends Dao implements BootService{
         Row row = result.one();
         if (row == null) return -1.0;
         return row.getDouble(0);
+    }
+
+    public Integer readDimensions(String id){
+        ResultSet result = session.execute(readDimensionsQuery.bind(id));
+        Row row = result.one();
+        if (row == null) return -1;
+        return row.getInt(0);
     }
 
     public Space read(String id){
@@ -105,6 +124,7 @@ public class SpacesDao extends Dao implements BootService{
 
     public void removeAll(){
         session.execute("truncate spaces;");
+        prepare();
     }
 
 
@@ -113,7 +133,8 @@ public class SpacesDao extends Dao implements BootService{
         Space space = new Space();
         space.setName(row.getString(1));
         space.setThreshold(row.getDouble(2));
-        space.setDate(row.getString(3));
+        space.setDimensions(row.getInt(3));
+        space.setDate(row.getString(4));
         return space;
     }
 

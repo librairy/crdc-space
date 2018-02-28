@@ -11,6 +11,8 @@ import org.librairy.service.space.rest.model.SimilarRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -45,11 +47,15 @@ public class RestNeighboursController {
             @ApiResponse(code = 200, message = "Success", response = NeighbourList.class),
     })
     @RequestMapping(method = RequestMethod.POST, produces = "application/json")
-    public NeighbourList similar(@RequestBody SimilarRequest request)  {
+    public ResponseEntity<NeighbourList> similar(@RequestBody SimilarRequest request)  {
         try {
-            return new NeighbourList(service.getSimilar(request.getShape(), request.getNumber(), request.getTypes(), request.getForce()).stream().map(n-> new org.librairy.service.space.rest.model.Neighbour(n)).collect(Collectors.toList()));
+            return new ResponseEntity(new NeighbourList(service.getSimilar(request.getShape(), request.getNumber(), request.getTypes(), request.getForce()).stream().map(n-> new org.librairy.service.space.rest.model.Neighbour(n)).collect(Collectors.toList())), HttpStatus.ACCEPTED);
         } catch (AvroRemoteException e) {
-            throw new RuntimeException(e);
+            LOG.error("AVRO error",e);
+            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
+        } catch(Exception e){
+            LOG.error("unexpected error",e);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

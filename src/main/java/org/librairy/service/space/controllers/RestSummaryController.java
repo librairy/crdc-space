@@ -7,11 +7,10 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.avro.AvroRemoteException;
 import org.librairy.service.space.facade.model.SpaceService;
 import org.librairy.service.space.rest.model.ComparisonRequest;
+import org.librairy.service.space.rest.model.Summary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,11 +20,11 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @RestController
-@RequestMapping("/comparisons")
-@Api(tags = "/comparisons", description = "vector-level operations")
-public class RestComparisonsController {
+@RequestMapping("/summary")
+@Api(tags = "/summary", description = "network-level operations")
+public class RestSummaryController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RestComparisonsController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RestSummaryController.class);
 
     @Autowired
     SpaceService service;
@@ -40,20 +39,18 @@ public class RestComparisonsController {
 
     }
 
-    @ApiOperation(value = "compare two vectors", nickname = "postCompare", response=Double.class)
+    @ApiOperation(value = "stats about points and clusters", nickname = "getSummary", response=Summary.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = Double.class),
+            @ApiResponse(code = 200, message = "Success", response = Summary.class),
     })
-    @RequestMapping(method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Double> compare(@RequestBody ComparisonRequest request)  {
+    @RequestMapping(method = RequestMethod.GET, produces = "application/json")
+    public Summary get()  {
         try {
-            return new ResponseEntity(service.compare(request.getShape1(),request.getShape2()), HttpStatus.ACCEPTED);
+            org.librairy.service.space.facade.model.Summary summary = service.getSummary();
+            Summary response = new Summary(summary);
+            return response;
         } catch (AvroRemoteException e) {
-            LOG.error("AVRO error",e);
-            return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);
-        } catch(Exception e){
-            LOG.error("unexpected error",e);
-            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new RuntimeException(e);
         }
     }
 

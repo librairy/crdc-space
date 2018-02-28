@@ -4,8 +4,6 @@ package org.librairy.service.space.controllers;
 import org.apache.avro.AvroRemoteException;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.librairy.service.space.Application;
 import org.librairy.service.space.AvroClient;
 import org.librairy.service.space.data.model.ShapebyCluster;
 import org.librairy.service.space.facade.model.Point;
@@ -15,9 +13,6 @@ import org.librairy.service.space.services.DirichletDistribution;
 import org.librairy.service.space.services.EndOfFileException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -28,12 +23,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-public class AvroTest {
+public class AvroIntTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AvroTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AvroIntTest.class);
 
     @Test
-    @Ignore
     public void writePoints() throws IOException {
         Integer numVectors  = 500000;
         Integer dimension   = 10;
@@ -61,7 +55,6 @@ public class AvroTest {
 
 
     @Test
-    @Ignore
     public void addPoint() throws InterruptedException, IOException {
 
         AvroClient client = new AvroClient();
@@ -69,20 +62,19 @@ public class AvroTest {
 
         //String host     = "librairy.linkeddata.es";
         String host     = "localhost";
-        Integer port    = 65411;
+        Integer port    = 65111;
 
         client.open(host,port);
 
         List<Double> vector = Arrays.asList(new Double[]{0.1,0.2});
 
-        client.addPoint(Point.newBuilder().setId("sample").setShape(vector).build());
+        Boolean result = client.addPoint(Point.newBuilder().setId("sample").setShape(vector).build());
 
         client.close();
-        LOG.info("completed!");
+        LOG.info("completed? " + result);
     }
 
     @Test
-    @Ignore
     public void addPoints() throws InterruptedException, IOException {
 
         AvroClient client = new AvroClient();
@@ -90,8 +82,8 @@ public class AvroTest {
 
         //String host     = "librairy.linkeddata.es";
         String host     = "localhost";
-        Integer port    = 65115;
-        Integer max     = 10000;
+        Integer port    = 65111;
+        Integer max     = 1000;
 
         client.open(host,port);
 

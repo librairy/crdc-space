@@ -112,10 +112,11 @@ public class ShapesDao extends Dao {
         PagingState pagingState = result.getExecutionInfo().getPagingState();
         List<Row> rows = result.all();
 
-        if (rows == null || rows.isEmpty()) return new ResultList<>(Collections.emptyList(),pagingState!= null? pagingState.toString() : "");
+        if (rows == null || rows.isEmpty()) return new ResultList<>(0l,Collections.emptyList(),pagingState!= null? pagingState.toString() : "");
 
         List<Point> values = rows.stream().limit(max).map(row -> pointFrom(row)).collect(Collectors.toList());
-        return new ResultList<>(values,pagingState!= null? pagingState.toString() : "");
+        long total = countersDao.get("shapes");
+        return new ResultList<>(total, values,pagingState!= null? pagingState.toString() : "");
     }
 
 

@@ -1,6 +1,5 @@
 package org.librairy.service.space.data.access;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.librairy.service.space.Application;
@@ -26,16 +25,15 @@ import java.util.stream.IntStream;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
-public class PointsDaoTest {
+public class PointsDaoIntTest {
 
 
-    private static final Logger LOG = LoggerFactory.getLogger(PointsDaoTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PointsDaoIntTest.class);
 
     @Autowired
     PointsDao pointsDao;
 
     @Test
-    @Ignore
     public void paginatedList() throws InterruptedException {
 
         pointsDao.removeAll();
