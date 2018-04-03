@@ -61,7 +61,7 @@ public class ShapesDao extends Dao {
     }
 
     public void prepareQueries(){
-        saveQuery   = session.prepare("insert into shapes (cluster, type, id, shape) values (?, ?, ?, ?)");
+        saveQuery   = session.prepare("insert into shapes (cluster, type, id, name, shape) values (?, ?, ?, ?, ?)");
         deleteQuery = session.prepare("delete from shapes where cluster = ? and type = ? and id = ?");
     }
 
@@ -73,6 +73,7 @@ public class ShapesDao extends Dao {
                 shapebyCluster.getCluster(),
                 shapebyCluster.getType(),
                 shapebyCluster.getId(),
+                shapebyCluster.getName(),
                 shapebyCluster.getShape());
         statement.setIdempotent(true);
 //        enqueue(session.executeAsync(statement));
@@ -140,7 +141,7 @@ public class ShapesDao extends Dao {
 
         }
 
-        return neigbours.stream().limit(max).sorted((a,b)-> -a.getScore().compareTo(b.getScore())).collect(Collectors.toList());
+        return neigbours.stream().sorted((a,b)-> -a.getScore().compareTo(b.getScore())).limit(max).collect(Collectors.toList());
 
     }
 

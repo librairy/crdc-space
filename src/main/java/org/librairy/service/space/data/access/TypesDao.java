@@ -80,12 +80,6 @@ public class TypesDao extends Dao{
         return 0;
     }
 
-    public long getTotal(){
-        ResultSet result = session.execute("select count(id) from types;");
-        Row row = result.one();
-        if (row != null) return row.getLong(0);
-        return 0;
-    }
 
     public ResultList<Counter> list(Integer max, Optional<String> page){
 
@@ -102,7 +96,7 @@ public class TypesDao extends Dao{
         if (rows == null || rows.isEmpty()) return new ResultList<>(0l, Collections.emptyList(), pagingState!= null? pagingState.toString() : "");
 
         List<Counter> values = rows.stream().limit(max).map(row -> new Counter(row.getString(0),row.getLong(1))).collect(Collectors.toList());
-        long total = getTotal();
+        long total = 0l;
         return new ResultList(total,values, pagingState!= null? pagingState.toString() : "");
     }
 

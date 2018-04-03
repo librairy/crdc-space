@@ -52,7 +52,7 @@ public class RestPointsController {
                 LOG.warn("Invalid vector size");
                 return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
             }
-            return new ResponseEntity<Void>(HttpStatus.ACCEPTED);
+            return new ResponseEntity<Void>(HttpStatus.OK);
         } catch (AvroRemoteException e) {
             LOG.error("AVRO error",e);
             return new ResponseEntity(HttpStatus.FAILED_DEPENDENCY);

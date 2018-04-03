@@ -91,7 +91,7 @@ public class MyService implements SpaceService, BootService {
     @Override
     public boolean prepare() {
         Double dbThreshold = spacesDao.readThreshold(new Space().getId());
-        this.threshold = dbThreshold >= 0.0? dbThreshold : 0.8;
+        this.threshold = dbThreshold >= 0.0? dbThreshold : 0.7;
 
         Integer dbDimensions = spacesDao.readDimensions(new Space().getId());
         this.dimensions = dbDimensions > 0? dbDimensions : -1;
@@ -174,7 +174,7 @@ public class MyService implements SpaceService, BootService {
         Point point = pointsDao.read(pointId);
         List<Neighbour> res = getSimilar(point.getShape(), max + 1, types,force);
         if (res.size() <= 1) return Collections.emptyList();
-        return res.stream().filter(n -> !n.getId().equalsIgnoreCase(point.getId())).collect(Collectors.toList());
+        return res.stream().filter(n -> !n.getId().equalsIgnoreCase(point.getId())).limit(max).collect(Collectors.toList());
     }
 
     @Override

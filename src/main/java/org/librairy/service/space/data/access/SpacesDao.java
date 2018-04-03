@@ -59,13 +59,16 @@ public class SpacesDao extends Dao implements BootService{
 
     @Override
     public boolean prepare() {
-        Space defaultSpace = new Space();
-        defaultSpace.setName("initial-space");
-        defaultSpace.setThreshold(0.8);
-        defaultSpace.setDate(dateFormatter.format(new Date()));
-        defaultSpace.setDimensions(-1);
+        Integer dimensions = readDimensions(new Space().getId());
+        if (dimensions < 0 ){
+            Space defaultSpace = new Space();
+            defaultSpace.setName("initial-space");
+            defaultSpace.setThreshold(0.7);
+            defaultSpace.setDate(dateFormatter.format(new Date()));
+            defaultSpace.setDimensions(-1);
 
-        save(defaultSpace);
+            save(defaultSpace);
+        }
         return true;
     }
 

@@ -75,13 +75,6 @@ public class ClustersDao extends Dao{
         return 0;
     }
 
-    public long getTotal(){
-        ResultSet result = session.execute("select count(id) from clusters;");
-        Row row = result.one();
-        if (row != null) return row.getLong(0);
-        return 0;
-    }
-
     public ResultList<Cluster> list(Integer max, Optional<String> page){
 
         Statement statement = new SimpleStatement("select id, value from clusters;");
@@ -97,7 +90,7 @@ public class ClustersDao extends Dao{
         if (rows == null || rows.isEmpty()) return new ResultList<>(0l, Collections.emptyList(), pagingState!= null? pagingState.toString() : "");
 
         List<org.librairy.service.space.data.model.Cluster> values = rows.stream().limit(max).map(row -> new org.librairy.service.space.data.model.Cluster(row.getString(0),row.getLong(1))).collect(Collectors.toList());
-        long total = getTotal();
+        long total = 0l;
         return new ResultList(total,values, pagingState!= null? pagingState.toString() : "");
     }
 
