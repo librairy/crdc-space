@@ -40,57 +40,64 @@ public class IndexAction implements Runnable {
 
     @Override
     public void run() {
+        try{
+            Instant startModel          = Instant.now();
 
-        Instant startModel          = Instant.now();
+            service.getShapesDao().removeAll();
+            service.getCountersDao().remove("shapes");
+            service.getClustersDao().removeAll();
 
-        service.getShapesDao().removeAll();
-        service.getCountersDao().remove("shapes");
-        service.getClustersDao().removeAll();
+            LOG.info("Indexing points..");
 
-        LOG.info("Indexing points..");
+            Statement statement = new SimpleStatement("select id, name, type, shape from points;");
+            statement.setFetchSize(1000);
 
-        Statement statement = new SimpleStatement("select id, name, type, shape from points;");
-        statement.setFetchSize(1000);
+            ResultSet rs = service.getPointsDao().getSession().execute(statement);
+            for (Row row : rs) {
+                if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
+                    rs.fetchMoreResults(); // this is asynchronous
 
-        ResultSet rs = service.getPointsDao().getSession().execute(statement);
-        for (Row row : rs) {
-            if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
-                rs.fetchMoreResults(); // this is asynchronous
+                // Process the row ...
+                service.getExecutors().execute(() -> {
+                    try{
+                        Point point = service.getPointsDao().pointFrom(row);
+                        service.getShapesDao().save(point, threshold);
+                    }catch (Exception e){
+                        LOG.error("Unexpected error processing row",e);
+                    }
+                });
 
-            // Process the row ...
-            service.getExecutors().submit(() -> {
-                Point point = service.getPointsDao().pointFrom(row);
-                service.getShapesDao().save(point, threshold);
-            });
 
-
-        }
-
-        service.setIndexing(false);
-
-        // Create space
-        Space space = new Space();
-        space.setDate(dateFormatter.format(new Date()));
-        space.setThreshold(threshold);
-        space.setDimensions(service.getSpacesDao().readDimensions(new Space().getId()));
-
-        service.getSpacesDao().save(space);
-
-        LOG.info("waiting for persist indexes..");
-        try {
-            while(!service.isIndexed()){
-                Thread.sleep(2000);
             }
-        } catch (AvroRemoteException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        Instant endModel    = Instant.now();
-        LOG.info("All points ("+this.total+") indexed in: "
-                + ChronoUnit.HOURS.between(startModel,endModel) + "hours "
-                + ChronoUnit.MINUTES.between(startModel,endModel)%60 + "min "
-                + (ChronoUnit.SECONDS.between(startModel,endModel)%3600) + "secs");
+            service.setIndexing(false);
+
+            // Create space
+            Space space = new Space();
+            space.setDate(dateFormatter.format(new Date()));
+            space.setThreshold(threshold);
+            space.setDimensions(service.getSpacesDao().readDimensions(new Space().getId()));
+
+            service.getSpacesDao().save(space);
+
+            LOG.info("waiting for persist indexes..");
+            try {
+                while(!service.isIndexed()){
+                    Thread.sleep(2000);
+                }
+            } catch (AvroRemoteException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            Instant endModel    = Instant.now();
+            LOG.info("All points ("+this.total+") indexed in: "
+                    + ChronoUnit.HOURS.between(startModel,endModel) + "hours "
+                    + ChronoUnit.MINUTES.between(startModel,endModel)%60 + "min "
+                    + (ChronoUnit.SECONDS.between(startModel,endModel)%3600) + "secs");
+        }catch (Exception e){
+            LOG.error("Unexpected error adding index",e);
+        }
     }
 }

@@ -24,7 +24,11 @@ public class AddPointAction implements Runnable {
 
     @Override
     public void run() {
-        service.getPointsDao().save(point);
-        service.getShapesDao().save(point, threshold);
+        try{
+            service.getPointsDao().save(point);
+            service.getShapesDao().save(point, threshold);
+        }catch (Exception e){
+            LOG.error("Unexpected error adding point", e);
+        }
     }
 }

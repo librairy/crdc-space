@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Component
@@ -54,13 +52,13 @@ public class MyService implements SpaceService, BootService {
 
     private Integer dimensions = -1;
 
-    private ExecutorService executors;
+    private ParallelService executors;
 
     private Boolean indexing = false;
 
     @PostConstruct
     public void setup() throws IOException {
-        this.executors = Executors.newWorkStealingPool();
+        this.executors = new ParallelService();
         LOG.info("Service initialized");
     }
 
@@ -84,7 +82,7 @@ public class MyService implements SpaceService, BootService {
         return countersDao;
     }
 
-    public ExecutorService getExecutors() {
+    public ParallelService getExecutors() {
         return executors;
     }
 
@@ -106,7 +104,7 @@ public class MyService implements SpaceService, BootService {
         }else if (dimensions != point.getShape().size()){
             return false;
         }
-        executors.submit(new AddPointAction(this,point,threshold));
+        executors.execute(new AddPointAction(this,point,threshold));
         return true;
     }
 
@@ -147,7 +145,7 @@ public class MyService implements SpaceService, BootService {
         if (isIndexing()) return false;
         this.threshold = threshold;
         setIndexing(true);
-        executors.submit(new IndexAction(this,threshold));
+        executors.execute(new IndexAction(this,threshold));
         return true;
     }
 
